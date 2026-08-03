@@ -50,3 +50,4 @@ output/
 Builds/
 build_temp/
 .ruff_cache/
+CHANGELOG.md
