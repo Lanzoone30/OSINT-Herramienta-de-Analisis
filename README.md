@@ -67,7 +67,7 @@ Para desarrolladores o usuarios que prefieran ejecutar el código fuente directa
     ```
 2.  **Instalar las dependencias**:
     ```bash
-    pip install -r requirements.txt
+    pip install -e .
     ```
 3.  **Iniciar la aplicación**:
     ```bash
@@ -84,11 +84,11 @@ El proyecto incluye el script `compilar_app.py` para automatizar la generación 
     ```
     O instala todas las dependencias de una vez:
     ```bash
-    pip install -r requirements.txt
+    pip install -e .
     ```
 2.  **Ejecutar el script de compilación**:
     ```bash
-    python compilar_app.py
+    python tools/compilar_app.py
     ```
     El proceso realizará automáticamente:
     - La preparación de los directorios de trabajo.
@@ -97,11 +97,7 @@ El proyecto incluye el script `compilar_app.py` para automatizar la generación 
     - La limpieza de archivos temporales que se generen durante la compilacion.
 3.  **Encontrar el ejecutable**: Una vez finalizado, el archivo `OSINT-Herramienta de Analisis de Redes.exe` estará listo en la nueva carpeta `build_final/`.
 
-**Nota**: Si modificás el diseño de la interfaz gráfica en el archivo `osint_app.ui`, vas a tener que regenerar nuevamente el módulo Python antes de compilar:
-
-```bash
-pyuic6 osint_app.ui -o ui/osint_window_ui.py
-```
+**Nota**: El layout de la interfaz se construye en Python (`src/osint/ui/layout.py`), no requiere archivos `.ui` ni `pyuic6`.
 
 ## Guía de Uso
 
@@ -161,19 +157,19 @@ graph TB
 
     subgraph "Control y Coordinación"
         CTRL[Controlador AppOSINT]
-        WORKER[Worker Thread<br/>worker.py]
-        COORD[Coordinador de Análisis<br/>analyzer.py]
+        WORKER[Worker Thread<br/>core/worker.py]
+        COORD[Coordinador de Análisis<br/>core/analyzer.py]
     end
 
     subgraph "Servicios de Análisis"
-        SVCS[8 Servicios OSINT<br/>services/]
+        SVCS[8 Servicios OSINT<br/>src/osint/services/]
         API[APIs Externas<br/>ip-api, whois, requests, etc.]
     end
 
     subgraph "Gestión de Datos"
-        HIST[Historial<br/>history.py]
-        EXP[Exportadores<br/>exports/]
-        CFG[Configuración<br/>config/]
+        HIST[Historial<br/>models/history.py]
+        EXP[Exportadores<br/>src/osint/exporters/]
+        CFG[Configuración<br/>src/osint/config.py]
     end
 
     UI --> CTRL
@@ -192,35 +188,39 @@ graph TB
 _Archivos/Módulos_                                         _Ubicación_en_Sistema_
 ================================================================================
 main.py                                                  Raíz del proyecto
-requirements.txt                                         Raíz del proyecto
 README.md                                                Raíz del proyecto
-compilar_app.py                                          Raíz del proyecto
-compilar_app.bat                                         Raíz del proyecto
+pyproject.toml                                           Raíz del proyecto
 
-config/i18n.py                                           /config
-config/icons_manager.py                                  /config
+tools/compilar_app.py                                    /tools
+tools/compilar_app.bat                                   /tools
 
-core/analyzer.py                                         /core
-core/worker.py                                           /core
+src/osint/config.py                                      /src/osint
+src/osint/app.py                                         /src/osint
+src/osint/__init__.py                                    /src/osint
 
-exports/txt_exporter.py                                  /exports
-exports/json_exporter.py                                 /exports
-exports/csv_exporter.py                                  /exports
+src/osint/core/analyzer.py                               /src/osint/core
+src/osint/core/worker.py                                 /src/osint/core
 
-models/history.py                                        /models
+src/osint/exporters/export.py                         /src/osint/exporters
 
-services/geo_service.py                                  /services
-services/whois_service.py                                /services
-services/ping_service.py                                 /services
-services/dns_service.py                                  /services
-services/ssl_service.py                                  /services
-services/headers_service.py                              /services
-services/port_service.py                                 /services
-services/reverse_service.py                              /services
+src/osint/models/history.py                              /src/osint/models
 
-ui/osint_app.ui                                          /ui
-ui/osint_window_ui.py                                    /ui (generado)
-ui/main_window.py                                        /ui
+src/osint/services/geo_service.py                        /src/osint/services
+src/osint/services/whois_service.py                      /src/osint/services
+src/osint/services/ping_service.py                       /src/osint/services
+src/osint/services/dns_service.py                        /src/osint/services
+src/osint/services/ssl_service.py                        /src/osint/services
+src/osint/services/headers_service.py                    /src/osint/services
+src/osint/services/port_service.py                       /src/osint/services
+src/osint/services/reverse_service.py                    /src/osint/services
+
+src/osint/ui/i18n.py                                     /src/osint/ui
+src/osint/ui/formatters.py                              /src/osint/ui
+src/osint/ui/themes.py                                  /src/osint/ui
+src/osint/ui/layout.py                                  /src/osint/ui
+src/osint/ui/main_window.py                             /src/osint/ui
+
+tests/                                                   /tests
 
 assets/icon_app.ico                                      /assets
 assets/logo_osint.png                                    /assets
@@ -244,4 +244,4 @@ assets/images/*.png                                      /assets/images
 
 ---
 
-**Versión**: 1.0.0 | **Última actualización**: 9 de Enero 2026
+**Versión**: 2.0.0 | **Última actualización**: Agosto 2026
