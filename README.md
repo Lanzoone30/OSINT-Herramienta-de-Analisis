@@ -39,9 +39,9 @@ Este proyecto no está diseñado para usos ofensivos ni actividades no autorizad
 
 ### Software Minimo
 
-- **Python 3.8** o superior.
+- **Python 3.10** o superior.
 - **pip** (gestor de paquetes de Python).
-- **Sistema operativo**: Windows
+- **Sistema operativo**: Windows o Linux.
 
 ## Instalación
 
@@ -51,7 +51,7 @@ La aplicación se distribuye de dos maneras: como un **ejecutable portable auto-
 
 Para usuarios que solo desean utilizar la herramienta sin configurar un entorno de Python, se proporciona un único archivo ejecutable.
 
-1.  **Descarga**: Obtén la última versión del archivo `OSINT-Herramienta de Analisis de Redes.exe` desde la sección de [Releases](https://github.com/Lanzoone30/OSINT-Herramienta-de-Analisis/releases) del repositorio.
+1.  **Descarga**: Obtén la última versión del archivo `OSINT-Herramienta_de_Analisis-vX.Y.Z-windows-x64.exe` desde la sección de [Releases](https://github.com/Lanzoone30/OSINT-Herramienta-de-Analisis/releases) del repositorio.
 2.  **Ejecución**: Coloca el archivo `.exe` en la carpeta de tu preferencia y haz doble clic sobre él para iniciar la aplicación. No se requiere instalación adicional.
 
 ### Opción 2: Código Fuente y Compilación Manual
@@ -95,7 +95,7 @@ El proyecto incluye el script `compilar_app.py` para automatizar la generación 
     - La copia de todos los archivos necesarios.
     - La ejecución de PyInstaller con las configuraciones necesarias.
     - La limpieza de archivos temporales que se generen durante la compilacion.
-3.  **Encontrar el ejecutable**: Una vez finalizado, el archivo `OSINT-Herramienta de Analisis de Redes.exe` estará listo en la nueva carpeta `build_final/`.
+3.  **Encontrar el ejecutable**: Una vez finalizado, el archivo `OSINT-Herramienta_de_Analisis-vX.Y.Z-windows-x64.exe` estará listo en la carpeta `Builds/Windows/`, junto con su archivo `SHA256SUMS-vX.Y.Z.txt`.
 
 **Nota**: El layout de la interfaz se construye en Python (`src/osint/ui/layout.py`), no requiere archivos `.ui` ni `pyuic6`.
 
