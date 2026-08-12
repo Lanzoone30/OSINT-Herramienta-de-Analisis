@@ -1,0 +1,4 @@
+# Los scripts de Windows Batch deben conservar CRLF siempre,
+# si no, cmd.exe los ejecuta mal y la ventana se cierra sola.
+*.bat text eol=crlf
+*.cmd text eol=crlf
