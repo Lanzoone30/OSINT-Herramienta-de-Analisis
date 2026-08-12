@@ -20,8 +20,8 @@
 
 <div align="center">
 
-| Screenshot                                                                           | Features:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Screenshot                                                                        | Features:                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | <img src="assets/images/OSINT_Image_preview.png" alt="OSINT Preview" width="400"> | **-Geolocation**: IP and location<br><br>**-WHOIS**: Domain registration<br><br>**-Ping/Traceroute**: Basic connectivity<br><br>**-DNS Lookup**: A/MX/TXT records<br><br>**-SSL/TLS**: Certificates and security<br><br>**-HTTP Headers**: Server headers<br><br>**-Port Scan**: Common ports<br><br>**-Reverse IP**: PTR and hosts<br><br>**-Full Analysis**: Sequential execution<br><br>**-Export**: TXT/JSON/CSV<br><br>**-Clear Results**: Reset results |
 
 </div>
@@ -87,15 +87,20 @@ The project includes the `compilar_app.py` script to automate the generation of 
     pip install -e .
     ```
 2.  **Run the build script**:
+
     ```bash
     python tools/compilar_app.py
     ```
+
     The process will automatically perform:
     - Preparation of the working directories.
     - Copying of all necessary files.
     - Execution of PyInstaller with the required configurations.
     - Cleanup of temporary files generated during compilation.
-3.  **Find the executable**: Once finished, the file `OSINT-Herramienta_de_Analisis-vX.Y.Z-windows-x64.exe` will be ready in the `Builds/Windows/` folder, alongside its `SHA256SUMS-vX.Y.Z.txt` file.
+
+    Alternatively, you can simply **double-click `tools/compilar_app.bat`** — it detects Python, installs PyInstaller if missing, installs the project, and launches the same build script automatically.
+
+3.  **Find the executable**: Once finished, the file `OSINT-Herramienta_de_Analisis-vX.Y.Z-windows-x64.exe` will be ready in the `Builds/Windows/` folder (project root), alongside its `SHA256SUMS-vX.Y.Z.txt` file.
 
 **Note**: The interface layout is built in Python (`src/osint/ui/layout.py`); it does not require `.ui` files or `pyuic6`.
 
@@ -107,34 +112,34 @@ This section describes the main features of the application's graphical interfac
 
 Perform specific analyses by clicking any of the tool buttons.
 
-|                                  Icon                                  | Name                | Description                                                                                  | Example Input                                                   |
-| :---------------------------------------------------------------------: | :------------------ | :------------------------------------------------------------------------------------------- | :--------------------------------------------------------------- |
-|      <img src="assets/buttons/geo.ico" alt="geo icon" width="32">      | **Geolocation**     | Retrieves the approximate geographic location of an IP or domain.                            | `github.com`<br>`wikipedia.org`<br>`example.com`                 |
-|    <img src="assets/buttons/whois.ico" alt="whois icon" width="32">    | **WHOIS**           | Queries the public registration information of a domain.                                    | `github.com`<br>`wikipedia.org`<br>`example.com`                 |
-|     <img src="assets/buttons/ping.ico" alt="ping icon" width="32">     | **Ping/Traceroute** | Performs a basic ICMP connectivity test.                                                    | `8.8.8.8`<br>`1.1.1.1`<br>`openai.com`                           |
-|      <img src="assets/buttons/dns.ico" alt="dns icon" width="32">      | **DNS Lookup**      | Performs DNS queries to obtain A, MX, TXT and NS records.                                   | `google.com`<br>`microsoft.com`<br>`cloudflare.com`              |
-|      <img src="assets/buttons/ssl.ico" alt="ssl icon" width="32">      | **SSL/TLS**         | Analyzes the SSL/TLS certificate and security configuration of a website.                  | `https://github.com`<br>`https://www.wikipedia.com`              |
-|   <img src="assets/buttons/header.ico" alt="header icon" width="32">   | **HTTP Headers**    | Retrieves and analyzes the HTTP headers returned by a web server.                           | `github.com`<br>`http://infobae.com`<br>`https://www.google.com` |
-| <img src="assets/buttons/portscan.ico" alt="portscan icon" width="32"> | **Port Scan**       | Scans common TCP ports to detect active services.                                          | `scanme.nmap.org`<br>`192.168.1.1`<br>`localhost`                |
-|  <img src="assets/buttons/reverse.ico" alt="reverse icon" width="32">  | **Reverse IP**      | Performs a reverse DNS (PTR) query to obtain the hostname associated with an IP.            | `8.8.8.8`<br>`1.1.1.1`<br>`142.250.185.206`                      |
+|                                  Icon                                  | Name                | Description                                                                      | Example Input                                                    |
+| :--------------------------------------------------------------------: | :------------------ | :------------------------------------------------------------------------------- | :--------------------------------------------------------------- |
+|      <img src="assets/buttons/geo.ico" alt="geo icon" width="32">      | **Geolocation**     | Retrieves the approximate geographic location of an IP or domain.                | `github.com`<br>`wikipedia.org`<br>`example.com`                 |
+|    <img src="assets/buttons/whois.ico" alt="whois icon" width="32">    | **WHOIS**           | Queries the public registration information of a domain.                         | `github.com`<br>`wikipedia.org`<br>`example.com`                 |
+|     <img src="assets/buttons/ping.ico" alt="ping icon" width="32">     | **Ping/Traceroute** | Performs a basic ICMP connectivity test.                                         | `8.8.8.8`<br>`1.1.1.1`<br>`openai.com`                           |
+|      <img src="assets/buttons/dns.ico" alt="dns icon" width="32">      | **DNS Lookup**      | Performs DNS queries to obtain A, MX, TXT and NS records.                        | `google.com`<br>`microsoft.com`<br>`cloudflare.com`              |
+|      <img src="assets/buttons/ssl.ico" alt="ssl icon" width="32">      | **SSL/TLS**         | Analyzes the SSL/TLS certificate and security configuration of a website.        | `https://github.com`<br>`https://www.wikipedia.com`              |
+|   <img src="assets/buttons/header.ico" alt="header icon" width="32">   | **HTTP Headers**    | Retrieves and analyzes the HTTP headers returned by a web server.                | `github.com`<br>`http://infobae.com`<br>`https://www.google.com` |
+| <img src="assets/buttons/portscan.ico" alt="portscan icon" width="32"> | **Port Scan**       | Scans common TCP ports to detect active services.                                | `scanme.nmap.org`<br>`192.168.1.1`<br>`localhost`                |
+|  <img src="assets/buttons/reverse.ico" alt="reverse icon" width="32">  | **Reverse IP**      | Performs a reverse DNS (PTR) query to obtain the hostname associated with an IP. | `8.8.8.8`<br>`1.1.1.1`<br>`142.250.185.206`                      |
 
 ### Global Actions
 
 These buttons control functions that affect the entire application or multiple analyses.
 
-|                                    Icon                                    | Name               | Description                                                                      | Example Use                                                                                                 |
-| :-------------------------------------------------------------------------: | :----------------- | :------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
-| <img src="assets/buttons/quick_scan.ico" alt="quick_scan icon" width="32"> | **Full Analysis**  | Sequentially runs the 8 individual analyses above.                              | Enter `github.com` and click. You will get geolocation, WHOIS, DNS, SSL, etc., in a single run.            |
-|     <img src="assets/buttons/export.ico" alt="export icon" width="32">     | **Export**         | Saves all analysis results to a file.                                           | After analyzing `google.com`, click "Export" to save a report in TXT, JSON or CSV.                         |
-|      <img src="assets/buttons/clear.ico" alt="clear icon" width="32">      | **Clear Results**  | Clears the target history and resets all results and fields.                    | Click to start a new analysis from scratch. You will be asked for confirmation.                            |
+|                                    Icon                                    | Name              | Description                                                  | Example Use                                                                                     |
+| :------------------------------------------------------------------------: | :---------------- | :----------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| <img src="assets/buttons/quick_scan.ico" alt="quick_scan icon" width="32"> | **Full Analysis** | Sequentially runs the 8 individual analyses above.           | Enter `github.com` and click. You will get geolocation, WHOIS, DNS, SSL, etc., in a single run. |
+|     <img src="assets/buttons/export.ico" alt="export icon" width="32">     | **Export**        | Saves all analysis results to a file.                        | After analyzing `google.com`, click "Export" to save a report in TXT, JSON or CSV.              |
+|      <img src="assets/buttons/clear.ico" alt="clear icon" width="32">      | **Clear Results** | Clears the target history and resets all results and fields. | Click to start a new analysis from scratch. You will be asked for confirmation.                 |
 
 ### Additional Interface Buttons
 
-|                              Icon                              | Name       | Description                                                                      | Example Use                                                                                       |
-| :-------------------------------------------------------------: | :--------- | :------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
-| <img src="assets/buttons/copy.ico" alt="copy icon" width="32"> | **Copy**   | Copies all text from the active results tab to the clipboard.                    | Click while on the "WHOIS" tab to copy all the registration information.                          |
-|                               `⋮`                              | **History** | Shows a record of recent analyses in the "Summary" tab.                          | Click to see a list with date, time, target and type of each recent analysis.                     |
-|                               `×`                              | **Clear**  | Clears only the results of the active results tab.                              | Click while on "Port Scan" to empty only that tab.                                               |
+|                              Icon                              | Name        | Description                                                   | Example Use                                                                   |
+| :------------------------------------------------------------: | :---------- | :------------------------------------------------------------ | :---------------------------------------------------------------------------- |
+| <img src="assets/buttons/copy.ico" alt="copy icon" width="32"> | **Copy**    | Copies all text from the active results tab to the clipboard. | Click while on the "WHOIS" tab to copy all the registration information.      |
+|                              `⋮`                               | **History** | Shows a record of recent analyses in the "Summary" tab.       | Click to see a list with date, time, target and type of each recent analysis. |
+|                              `×`                               | **Clear**   | Clears only the results of the active results tab.            | Click while on "Port Scan" to empty only that tab.                            |
 
 ### Accepted Input Formats
 
@@ -149,84 +154,44 @@ The application accepts multiple formats for each input field:
 
 The application is designed with a modular architecture that separates responsibilities, making maintenance and extension easier. The following diagram illustrates the main data flow and the interaction between components:
 
-```mermaid
-graph TB
-    subgraph "User Interface (UI)"
-        UI[Main Window<br/>main_window.py]
-    end
+![OSINT Technical Architecture](assets/images/architecture.png)
 
-    subgraph "Control and Coordination"
-        CTRL[AppOSINT Controller]
-        WORKER[Worker Thread<br/>core/worker.py]
-        COORD[Analysis Coordinator<br/>core/analyzer.py]
-    end
-
-    subgraph "Analysis Services"
-        SVCS[8 OSINT Services<br/>src/osint/services/]
-        API[External APIs<br/>ip-api, whois, requests, etc.]
-    end
-
-    subgraph "Data Management"
-        HIST[History<br/>models/history.py]
-        EXP[Exporters<br/>src/osint/exporters/]
-        CFG[Configuration<br/>src/osint/config.py]
-    end
-
-    UI --> CTRL
-    CTRL --> WORKER
-    WORKER --> COORD
-    COORD --> SVCS
-    SVCS --> API
-    CTRL --> HIST
-    CTRL --> EXP
-    CTRL --> CFG
-```
-
-## Project Structure
+## Project Structure (`/src`)
 
 ```
-_Files/Modules_                                          _System Location_
-================================================================================
-main.py                                                  Project root
-README.md                                                Project root
-pyproject.toml                                           Project root
-
-tools/compilar_app.py                                    /tools
-tools/compilar_app.bat                                   /tools
-
-src/osint/config.py                                      /src/osint
-src/osint/app.py                                         /src/osint
-src/osint/__init__.py                                    /src/osint
-
-src/osint/core/analyzer.py                               /src/osint/core
-src/osint/core/worker.py                                 /src/osint/core
-
-src/osint/exporters/export.py                            /src/osint/exporters
-
-src/osint/models/history.py                              /src/osint/models
-
-src/osint/services/geo_service.py                        /src/osint/services
-src/osint/services/whois_service.py                      /src/osint/services
-src/osint/services/ping_service.py                       /src/osint/services
-src/osint/services/dns_service.py                        /src/osint/services
-src/osint/services/ssl_service.py                        /src/osint/services
-src/osint/services/headers_service.py                    /src/osint/services
-src/osint/services/port_service.py                       /src/osint/services
-src/osint/services/reverse_service.py                    /src/osint/services
-
-src/osint/ui/i18n.py                                     /src/osint/ui
-src/osint/ui/formatters.py                               /src/osint/ui
-src/osint/ui/themes.py                                   /src/osint/ui
-src/osint/ui/layout.py                                   /src/osint/ui
-src/osint/ui/main_window.py                              /src/osint/ui
-
-tests/                                                   /tests
-
-assets/icon_app.ico                                      /assets
-assets/logo_osint.png                                    /assets
-assets/buttons/*.ico                                     /assets/buttons
-assets/tabs/*.ico                                        /assets/tabs
-assets/images/*.png                                      /assets/images
+src/osint/
+├── __init__.py
+├── __main__.py
+├── app.py
+├── config.py                 (IconManager)
+├── core/
+│   ├── __init__.py
+│   ├── analyzer.py           (Analysis Coordinator)
+│   └── worker.py             (Worker Thread)
+├── exporters/
+│   ├── __init__.py
+│   └── export.py             (Unified Exporter: TXT/JSON/CSV)
+├── models/
+│   ├── __init__.py
+│   └── history.py            (Analysis History)
+├── services/
+│   ├── __init__.py
+│   ├── base.py               (Service Base Class)
+│   ├── geo_service.py
+│   ├── whois_service.py
+│   ├── ping_service.py
+│   ├── dns_service.py
+│   ├── ssl_service.py
+│   ├── headers_service.py
+│   ├── port_service.py
+│   └── reverse_service.py
+└── ui/
+    ├── __init__.py
+    ├── i18n.py               (Translations)
+    ├── formatters.py         (Result Formatters)
+    ├── themes.py             (Dark Theme + QPalette)
+    ├── layout.py             (Layout Builder)
+    └── main_window.py        (Main Window)
 ```
 
 ## Legal Notice
@@ -243,4 +208,4 @@ assets/images/*.png                                      /assets/images
 
 ---
 
-**Version**: 2.0.0 | **Last updated**: August 2026
+**Version**: 2.0.0 | **Last updated**: 12 August 2026
