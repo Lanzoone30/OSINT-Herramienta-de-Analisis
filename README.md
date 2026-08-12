@@ -1,247 +1,211 @@
-## OSINT - Herramienta de Análisis
+## OSINT - Analysis Tool
 
 <img src="assets/logo_osint.png" alt="OSINT Logo" width="170" height="215" align="right"/>
 
-- [Requisitos del Sistema](#requisitos-del-sistema)
-- [Instalación](#instalación)
-- [Guía de Uso](#guía-de-uso)
-- [Arquitectura Técnica](#arquitectura-técnica)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Aviso Legal](#aviso-legal)
-- [Créditos](#créditos)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+- [User Guide](#user-guide)
+- [Technical Architecture](#technical-architecture)
+- [Project Structure](#project-structure)
+- [Legal Notice](#legal-notice)
+- [Credits](#credits)
 
 ---
 
-**OSINT - Herramienta de Análisis de Redes** es una aplicación gráfica desarrollada en **Python** con **PyQt6**, diseñada para realizar análisis de **Inteligencia de Fuentes Abiertas (OSINT)** sobre objetivos de red como:
+**OSINT - Network Analysis Tool** is a graphical application built in **Python** with **PyQt6**, designed to perform **Open Source Intelligence (OSINT)** analysis on network targets such as:
 
-- Dominios
-- Direcciones IP
-- Servicios web
+- Domains
+- IP addresses
+- Web services
 
 <div align="center">
 
-| Captura de pantalla                                                                 | Funcionalidades:                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ----------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| <img src="assets/images/OSINT_Image_preview01.png" alt="OSINT Preview" width="400"> | **-Geolocalización**: IP y ubicación<br><br>**-WHOIS**: Registro de dominios<br><br>**-Ping/Traceroute**: Conectividad básica<br><br>**-DNS Lookup**: Registros A/MX/TXT<br><br>**-SSL/TLS**: Certificados y seguridad<br><br>**-Headers HTTP**: Cabeceras del servidor<br><br>**-Port Scan**: Puertos comunes<br><br>**-Reverse IP**: PTR y hosts<br><br>**-Análisis Completo**: Ejecución secuencial<br><br>**-Exportar**: TXT/JSON/CSV<br><br>**-Limpiar Lista**: Restablecer resultados |
+| Screenshot                                                                        | Features:                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <img src="assets/images/OSINT_Image_preview.png" alt="OSINT Preview" width="400"> | **-Geolocation**: IP and location<br><br>**-WHOIS**: Domain registration<br><br>**-Ping/Traceroute**: Basic connectivity<br><br>**-DNS Lookup**: A/MX/TXT records<br><br>**-SSL/TLS**: Certificates and security<br><br>**-HTTP Headers**: Server headers<br><br>**-Port Scan**: Common ports<br><br>**-Reverse IP**: PTR and hosts<br><br>**-Full Analysis**: Sequential execution<br><br>**-Export**: TXT/JSON/CSV<br><br>**-Clear Results**: Reset results |
 
 </div>
 
-La herramienta integra múltiples técnicas de recolección de información en una interfaz unificada y fácil de usar, ideal para:
+The tool integrates multiple information-gathering techniques into a unified and easy-to-use interface, ideal for:
 
-- Fines educativos y académicos
-- Auditorías de seguridad autorizadas
-- Investigación en ciberseguridad
-- Análisis forense digital
+- Educational and academic purposes
+- Authorized security audits
+- Cybersecurity research
+- Digital forensic analysis
 
-Este proyecto no está diseñado para usos ofensivos ni actividades no autorizadas.
+This project is not designed for offensive use or unauthorized activities.
 
-## Requisitos del Sistema
+## System Requirements
 
-### Software Minimo
+### Minimum Software
 
-- **Python 3.8** o superior.
-- **pip** (gestor de paquetes de Python).
-- **Sistema operativo**: Windows
+- **Python 3.10** or higher.
+- **pip** (Python package manager).
+- **Operating system**: Windows or Linux.
 
-## Instalación
+## Installation
 
-La aplicación se distribuye de dos maneras: como un **ejecutable portable auto-contenido** (recomendado para la mayoría de usuarios) y como **código fuente Python** para aquellos que deseen modificarlo o ejecutarlo directamente.
+The application is distributed in two ways: as a self-contained **portable executable** (recommended for most users) and as **Python source code** for those who want to modify it or run it directly.
 
-### Opción 1: Ejecutable Portable (.exe) [Recomendado]
+### Option 1: Portable Executable (.exe) [Recommended]
 
-Para usuarios que solo desean utilizar la herramienta sin configurar un entorno de Python, se proporciona un único archivo ejecutable.
+For users who only want to use the tool without setting up a Python environment, a single executable file is provided.
 
-1.  **Descarga**: Obtén la última versión del archivo `OSINT-Herramienta de Analisis de Redes.exe` desde la sección de [Releases](https://github.com/Lanzoone30/OSINT-Herramienta-de-Analisis/releases) del repositorio.
-2.  **Ejecución**: Coloca el archivo `.exe` en la carpeta de tu preferencia y haz doble clic sobre él para iniciar la aplicación. No se requiere instalación adicional.
+1.  **Download**: Get the latest version of the file `OSINT-Herramienta_de_Analisis-vX.Y.Z-windows-x64.exe` from the [Releases](https://github.com/Lanzoone30/OSINT-Herramienta-de-Analisis/releases) section of the repository.
+2.  **Run**: Place the `.exe` file in your preferred folder and double-click it to launch the application. No additional installation is required.
 
-### Opción 2: Código Fuente y Compilación Manual
+### Option 2: Source Code and Manual Compilation
 
-Para desarrolladores o usuarios que prefieran ejecutar el código fuente directamente o generar su propia versión compilada, sigue estos pasos.
+For developers or users who prefer to run the source code directly or generate their own compiled version, follow these steps.
 
-#### Ejecutar desde el código fuente
+#### Run from source code
 
-1.  **Clonar el repositorio** y acceder al directorio:
+1.  **Clone the repository** and access the directory:
     ```bash
     git clone https://github.com/Lanzoone30/OSINT-Herramienta-de-Analisis.git
     cd OSINT-Herramienta-de-Analisis
     ```
-2.  **Instalar las dependencias**:
+2.  **Install dependencies**:
     ```bash
-    pip install -r requirements.txt
+    pip install -e .
     ```
-3.  **Iniciar la aplicación**:
+3.  **Launch the application**:
     ```bash
     python main.py
     ```
 
-#### Compilar tu propio ejecutable
+#### Compile your own executable
 
-El proyecto incluye el script `compilar_app.py` para automatizar la generación del archivo `.exe` utilizando PyInstaller.
+The project includes the `compilar_app.py` script to automate the generation of the `.exe` file using PyInstaller.
 
-1.  **Asegurar las dependencias de compilación**: Instala las herramientas necesarias si no lo has hecho:
+1.  **Ensure build dependencies**: Install the required tools if you haven't:
     ```bash
     pip install pyinstaller pyinstaller-hooks-contrib
     ```
-    O instala todas las dependencias de una vez:
+    Or install all dependencies at once:
     ```bash
-    pip install -r requirements.txt
+    pip install -e .
     ```
-2.  **Ejecutar el script de compilación**:
+2.  **Run the build script**:
+
     ```bash
-    python compilar_app.py
+    python tools/compilar_app.py
     ```
-    El proceso realizará automáticamente:
-    - La preparación de los directorios de trabajo.
-    - La copia de todos los archivos necesarios.
-    - La ejecución de PyInstaller con las configuraciones necesarias.
-    - La limpieza de archivos temporales que se generen durante la compilacion.
-3.  **Encontrar el ejecutable**: Una vez finalizado, el archivo `OSINT-Herramienta de Analisis de Redes.exe` estará listo en la nueva carpeta `build_final/`.
 
-**Nota**: Si modificás el diseño de la interfaz gráfica en el archivo `osint_app.ui`, vas a tener que regenerar nuevamente el módulo Python antes de compilar:
+    The process will automatically perform:
+    - Preparation of the working directories.
+    - Copying of all necessary files.
+    - Execution of PyInstaller with the required configurations.
+    - Cleanup of temporary files generated during compilation.
 
-```bash
-pyuic6 osint_app.ui -o ui/osint_window_ui.py
-```
+    Alternatively, you can simply **double-click `tools/compilar_app.bat`** — it detects Python, installs PyInstaller if missing, installs the project, and launches the same build script automatically.
 
-## Guía de Uso
+3.  **Find the executable**: Once finished, the file `OSINT-Herramienta_de_Analisis-vX.Y.Z-windows-x64.exe` will be ready in the `Builds/Windows/` folder (project root), alongside its `SHA256SUMS-vX.Y.Z.txt` file.
 
-Esta sección describe las funciones principales de la interfaz gráfica de la aplicación. Puedes acceder a todas las herramientas desde la barra principal de botones.
+**Note**: The interface layout is built in Python (`src/osint/ui/layout.py`); it does not require `.ui` files or `pyuic6`.
 
-### Análisis Individuales
+## User Guide
 
-Realiza análisis específicos haciendo clic en cualquiera de los botones de herramientas.
+This section describes the main features of the application's graphical interface. You can access all tools from the main button bar.
 
-|                                  Icono                                  | Nombre              | Descripción                                                                              | Ejemplo de Entrada                                               |
-| :---------------------------------------------------------------------: | :------------------ | :--------------------------------------------------------------------------------------- | :--------------------------------------------------------------- |
-|      <img src="assets/buttons/geo.ico" alt="icono geo" width="32">      | **Geolocalización** | Obtiene información geográfica e ISP de una dirección IP o dominio.                      | `8.8.8.8`<br>`google.com`<br>`github.com`                        |
-|    <img src="assets/buttons/whois.ico" alt="icono whois" width="32">    | **WHOIS**           | Consulta la información de registro pública de un dominio.                               | `github.com`<br>`wikipedia.org`<br>`example.com`                 |
-|     <img src="assets/buttons/ping.ico" alt="icono ping" width="32">     | **Ping/Traceroute** | Realiza una prueba básica de conectividad ICMP.                                          | `8.8.8.8`<br>`1.1.1.1`<br>`openai.com`                           |
-|      <img src="assets/buttons/dns.ico" alt="icono dns" width="32">      | **DNS Lookup**      | Realiza consultas DNS para obtener registros A, MX, TXT y NS.                            | `google.com`<br>`microsoft.com`<br>`cloudflare.com`              |
-|      <img src="assets/buttons/ssl.ico" alt="icono ssl" width="32">      | **SSL/TLS**         | Analiza el certificado y configuración de seguridad SSL/TLS de un sitio web.             | `https://github.com`<br>`https://www.wikipedia.com`              |
-|   <img src="assets/buttons/header.ico" alt="icono header" width="32">   | **Headers HTTP**    | Recupera y analiza las cabeceras HTTP devueltas por un servidor web.                     | `github.com`<br>`http://infobae.com`<br>`https://www.google.com` |
-| <img src="assets/buttons/portscan.ico" alt="icono portscan" width="32"> | **Port Scan**       | Escanea puertos TCP comunes para detectar servicios activos.                             | `scanme.nmap.org`<br>`192.168.1.1`<br>`localhost`                |
-|  <img src="assets/buttons/reverse.ico" alt="icono reverse" width="32">  | **Reverse IP**      | Realiza una consulta DNS inversa (PTR) para obtener el nombre de host asociado a una IP. | `8.8.8.8`<br>`1.1.1.1`<br>`142.250.185.206`                      |
+### Individual Analyses
 
-### Acciones Globales
+Perform specific analyses by clicking any of the tool buttons.
 
-Estos botones controlan funciones que afectan a toda la aplicación o a múltiples análisis.
+|                                  Icon                                  | Name                | Description                                                                      | Example Input                                                    |
+| :--------------------------------------------------------------------: | :------------------ | :------------------------------------------------------------------------------- | :--------------------------------------------------------------- |
+|      <img src="assets/buttons/geo.ico" alt="geo icon" width="32">      | **Geolocation**     | Retrieves the approximate geographic location of an IP or domain.                | `github.com`<br>`wikipedia.org`<br>`example.com`                 |
+|    <img src="assets/buttons/whois.ico" alt="whois icon" width="32">    | **WHOIS**           | Queries the public registration information of a domain.                         | `github.com`<br>`wikipedia.org`<br>`example.com`                 |
+|     <img src="assets/buttons/ping.ico" alt="ping icon" width="32">     | **Ping/Traceroute** | Performs a basic ICMP connectivity test.                                         | `8.8.8.8`<br>`1.1.1.1`<br>`openai.com`                           |
+|      <img src="assets/buttons/dns.ico" alt="dns icon" width="32">      | **DNS Lookup**      | Performs DNS queries to obtain A, MX, TXT and NS records.                        | `google.com`<br>`microsoft.com`<br>`cloudflare.com`              |
+|      <img src="assets/buttons/ssl.ico" alt="ssl icon" width="32">      | **SSL/TLS**         | Analyzes the SSL/TLS certificate and security configuration of a website.        | `https://github.com`<br>`https://www.wikipedia.com`              |
+|   <img src="assets/buttons/header.ico" alt="header icon" width="32">   | **HTTP Headers**    | Retrieves and analyzes the HTTP headers returned by a web server.                | `github.com`<br>`http://infobae.com`<br>`https://www.google.com` |
+| <img src="assets/buttons/portscan.ico" alt="portscan icon" width="32"> | **Port Scan**       | Scans common TCP ports to detect active services.                                | `scanme.nmap.org`<br>`192.168.1.1`<br>`localhost`                |
+|  <img src="assets/buttons/reverse.ico" alt="reverse icon" width="32">  | **Reverse IP**      | Performs a reverse DNS (PTR) query to obtain the hostname associated with an IP. | `8.8.8.8`<br>`1.1.1.1`<br>`142.250.185.206`                      |
 
-|                                    Icono                                    | Nombre                | Descripción                                                                 | Ejemplo de Uso                                                                                            |
-| :-------------------------------------------------------------------------: | :-------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
-| <img src="assets/buttons/quick_scan.ico" alt="icono quick_scan" width="32"> | **Análisis Completo** | Ejecuta secuencialmente los 8 análisis individuales de arriba.              | Ingresa `github.com` y haz clic. Obtendrás geolocalización, WHOIS, DNS, SSL, etc., en una sola ejecución. |
-|     <img src="assets/buttons/export.ico" alt="icono export" width="32">     | **Exportar**          | Guarda todos los resultados de los análisis en un archivo.                  | Después de analizar `google.com`, haz clic en "Exportar" para guardar un informe en TXT, JSON o CSV.      |
-|      <img src="assets/buttons/clear.ico" alt="icono clear" width="32">      | **Limpiar Lista**     | Borra el historial de objetivos y restablece todos los resultados y campos. | Haz clic para comenzar un nuevo análisis desde cero. Se te pedirá confirmación.                           |
+### Global Actions
 
-### Botones Adicionales de Interfaz
+These buttons control functions that affect the entire application or multiple analyses.
 
-|                              Icono                              | Nombre        | Descripción                                                                     | Ejemplo de Uso                                                                              |
-| :-------------------------------------------------------------: | :------------ | :------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------ |
-| <img src="assets/buttons/copy.ico" alt="icono copy" width="32"> | **Copiar**    | Copia todo el texto de la pestaña de resultados activa al portapapeles.         | Haz clic mientras estás en la pestaña "WHOIS" para copiar toda la información del registro. |
-|                               `⋮`                               | **Historial** | Muestra un registro de los últimos análisis realizados en la pestaña "Resumen". | Haz clic para ver una lista con fecha, hora, objetivo y tipo de cada análisis reciente.     |
-|                               `×`                               | **Limpiar**   | Borra solo los resultados de la pestaña de resultados activa.                   | Haz clic mientras estás en "Port Scan" para vaciar solo esa pestaña.                        |
+|                                    Icon                                    | Name              | Description                                                  | Example Use                                                                                     |
+| :------------------------------------------------------------------------: | :---------------- | :----------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| <img src="assets/buttons/quick_scan.ico" alt="quick_scan icon" width="32"> | **Full Analysis** | Sequentially runs the 8 individual analyses above.           | Enter `github.com` and click. You will get geolocation, WHOIS, DNS, SSL, etc., in a single run. |
+|     <img src="assets/buttons/export.ico" alt="export icon" width="32">     | **Export**        | Saves all analysis results to a file.                        | After analyzing `google.com`, click "Export" to save a report in TXT, JSON or CSV.              |
+|      <img src="assets/buttons/clear.ico" alt="clear icon" width="32">      | **Clear Results** | Clears the target history and resets all results and fields. | Click to start a new analysis from scratch. You will be asked for confirmation.                 |
 
-### Formatos de Entrada Aceptados
+### Additional Interface Buttons
 
-La aplicación acepta múltiples formatos para cada campo de entrada:
+|                              Icon                              | Name        | Description                                                   | Example Use                                                                   |
+| :------------------------------------------------------------: | :---------- | :------------------------------------------------------------ | :---------------------------------------------------------------------------- |
+| <img src="assets/buttons/copy.ico" alt="copy icon" width="32"> | **Copy**    | Copies all text from the active results tab to the clipboard. | Click while on the "WHOIS" tab to copy all the registration information.      |
+|                              `⋮`                               | **History** | Shows a record of recent analyses in the "Summary" tab.       | Click to see a list with date, time, target and type of each recent analysis. |
+|                              `×`                               | **Clear**   | Clears only the results of the active results tab.            | Click while on "Port Scan" to empty only that tab.                            |
 
-- **Dominios simples**: `google.com`, `github.io`
-- **Direcciones IP**: `192.168.1.1`, `8.8.4.4`
-- **URL completas**: `https://www.google.com`, `http://localhost:8080`
-- **Subdominios**: `api.github.com`, `docs.python.org`
+### Accepted Input Formats
 
-## Arquitectura del Proyecto
+The application accepts multiple formats for each input field:
 
-La aplicación está diseñada con una arquitectura modular que separa las responsabilidades, de forma que me permite facilitar el mantenimiento y la extensión. El siguiente diagrama ilustra de forma general el flujo principal de datos y la interacción entre componentes:
+- **Simple domains**: `google.com`, `github.io`
+- **IP addresses**: `192.168.1.1`, `8.8.4.4`
+- **Full URLs**: `https://www.google.com`, `http://localhost:8080`
+- **Subdomains**: `api.github.com`, `docs.python.org`
 
-```mermaid
-graph TB
-    subgraph "Interfaz de Usuario (UI)"
-        UI[Ventana Principal<br/>main_window.py]
-    end
+## Technical Architecture
 
-    subgraph "Control y Coordinación"
-        CTRL[Controlador AppOSINT]
-        WORKER[Worker Thread<br/>worker.py]
-        COORD[Coordinador de Análisis<br/>analyzer.py]
-    end
+The application is designed with a modular architecture that separates responsibilities, making maintenance and extension easier. The following diagram illustrates the main data flow and the interaction between components:
 
-    subgraph "Servicios de Análisis"
-        SVCS[8 Servicios OSINT<br/>services/]
-        API[APIs Externas<br/>ip-api, whois, requests, etc.]
-    end
+![OSINT Technical Architecture](assets/images/architecture.png)
 
-    subgraph "Gestión de Datos"
-        HIST[Historial<br/>history.py]
-        EXP[Exportadores<br/>exports/]
-        CFG[Configuración<br/>config/]
-    end
-
-    UI --> CTRL
-    CTRL --> WORKER
-    WORKER --> COORD
-    COORD --> SVCS
-    SVCS --> API
-    CTRL --> HIST
-    CTRL --> EXP
-    CTRL --> CFG
-```
-
-## Estructura del Proyecto
+## Project Structure (`/src`)
 
 ```
-_Archivos/Módulos_                                         _Ubicación_en_Sistema_
-================================================================================
-main.py                                                  Raíz del proyecto
-requirements.txt                                         Raíz del proyecto
-README.md                                                Raíz del proyecto
-compilar_app.py                                          Raíz del proyecto
-compilar_app.bat                                         Raíz del proyecto
-
-config/i18n.py                                           /config
-config/icons_manager.py                                  /config
-
-core/analyzer.py                                         /core
-core/worker.py                                           /core
-
-exports/txt_exporter.py                                  /exports
-exports/json_exporter.py                                 /exports
-exports/csv_exporter.py                                  /exports
-
-models/history.py                                        /models
-
-services/geo_service.py                                  /services
-services/whois_service.py                                /services
-services/ping_service.py                                 /services
-services/dns_service.py                                  /services
-services/ssl_service.py                                  /services
-services/headers_service.py                              /services
-services/port_service.py                                 /services
-services/reverse_service.py                              /services
-
-ui/osint_app.ui                                          /ui
-ui/osint_window_ui.py                                    /ui (generado)
-ui/main_window.py                                        /ui
-
-assets/icon_app.ico                                      /assets
-assets/logo_osint.png                                    /assets
-assets/buttons/*.ico                                     /assets/buttons
-assets/tabs/*.ico                                        /assets/tabs
-assets/images/*.png                                      /assets/images
-
+src/osint/
+├── __init__.py
+├── __main__.py
+├── app.py
+├── config.py                 (IconManager)
+├── core/
+│   ├── __init__.py
+│   ├── analyzer.py           (Analysis Coordinator)
+│   └── worker.py             (Worker Thread)
+├── exporters/
+│   ├── __init__.py
+│   └── export.py             (Unified Exporter: TXT/JSON/CSV)
+├── models/
+│   ├── __init__.py
+│   └── history.py            (Analysis History)
+├── services/
+│   ├── __init__.py
+│   ├── base.py               (Service Base Class)
+│   ├── geo_service.py
+│   ├── whois_service.py
+│   ├── ping_service.py
+│   ├── dns_service.py
+│   ├── ssl_service.py
+│   ├── headers_service.py
+│   ├── port_service.py
+│   └── reverse_service.py
+└── ui/
+    ├── __init__.py
+    ├── i18n.py               (Translations)
+    ├── formatters.py         (Result Formatters)
+    ├── themes.py             (Dark Theme + QPalette)
+    ├── layout.py             (Layout Builder)
+    └── main_window.py        (Main Window)
 ```
 
-## Aviso Legal
+## Legal Notice
 
-**OSINT - Herramienta de Análisis de Redes** es una herramienta desarrollada con **fines exclusivamente educativos, de investigación académica y para auditorías de seguridad autorizadas**.
+**OSINT - Network Analysis Tool** is a tool developed for **strictly educational purposes, academic research, and authorized security audits**.
 
-- **Uso Aceptable**: El usuario solo debe emplear esta herramienta para analizar sistemas, dominios e infraestructuras sobre los cuales tenga **autorización explícita y por escrito** del propietario.
-- **Uso Prohibido**: Queda expresamente prohibido utilizar este software para realizar actividades de análisis no autorizadas, vulnerar la privacidad de terceros, atacar sistemas ajenos o cualquier acción que infrinja leyes locales o internacionales.
-- **Responsabilidad**: El desarrollador no asume ninguna responsabilidad por el uso indebido, ilegal o no autorizado que se haga de esta herramienta. El usuario es el único responsable de sus acciones y debe asegurarse de cumplir con toda la legislación aplicable.
+- **Acceptable Use**: The user must only employ this tool to analyze systems, domains and infrastructure for which they have **explicit, written authorization** from the owner.
+- **Prohibited Use**: The use of this software to perform unauthorized analysis, violate the privacy of third parties, attack external systems, or any action that violates local or international laws is expressly prohibited.
+- **Liability**: The developer assumes no responsibility for any misuse, illegal, or unauthorized use of this tool. The user is solely responsible for their actions and must ensure compliance with all applicable legislation.
 
-## Licencia
+## License
 
-**Copyright (C) 2026 Adrian A. Lanzone** Este proyecto utiliza **Licencia MIT**. Consulte el archivo LICENSE para más detalles.
+**Copyright (C) 2026 Adrian A. Lanzone** This project is distributed under the **MIT License**. See the LICENSE file for more details.
 
 ---
 
-**Versión**: 1.0.0 | **Última actualización**: 9 de Enero 2026
+**Version**: 2.0.0 | **Last updated**: 12 August 2026

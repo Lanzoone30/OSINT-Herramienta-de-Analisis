@@ -1,10 +1,8 @@
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
 .Python
+.opencode/
 build/
 develop-eggs/
 dist/
@@ -20,16 +18,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# PyInstaller
 *.manifest
 *.spec
-
-# Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
-
-# Unit test / coverage reports
 htmlcov/
 .tox/
 .coverage
@@ -40,39 +32,23 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
-
-# Translations
 *.mo
 *.pot
-
-# OS
 .DS_Store
 Thumbs.db
-
-# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Virtual environment
 venv/
 env/
 ENV/
-
-# OSINT Suite specific
 *.log
-exports/*.txt
-exports/*.json
-exports/*.csv
-
-# Output files (si generas algún reporte)
+*.local
 reports/
 output/
-
-# Archivos de configuración local
-config/local_settings.py
-*.local
-
-# Archivos de la UI generados temporalmente
-ui/*_ui_backup.py
+Builds/
+build_temp/
+.ruff_cache/
+CHANGELOG.md
+docs/
