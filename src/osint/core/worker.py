@@ -2,9 +2,10 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 
 class WorkerThread(QThread):
-    finished = pyqtSignal(object)    # Éxito con resultado
-    error = pyqtSignal(str)          # Error con mensaje
-    progress = pyqtSignal(int, str)  # Progreso (porcentaje + descripción)
+    finished = pyqtSignal(object)        # Exito con resultado
+    error = pyqtSignal(str)              # Error con mensaje
+    progress = pyqtSignal(int, str)      # Progreso (porcentaje + descripcion)
+    item_ready = pyqtSignal(str, object) # Item incremental (clave + resultado)
 
     def __init__(self, task_func, *args, **kwargs):
         # Inicializo con función y sus argumentos
