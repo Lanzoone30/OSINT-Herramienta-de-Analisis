@@ -8,7 +8,7 @@ de pyuic6.
 
 Why this design: El layout en Python puro es más mantenible, no requiere
 herramientas externas y permite que los estilos vengan de themes.py en
-runtime (necesario para el theme switching).
+runtime (estilos dictados por el tema oscuro fijo en themes.py).
 """
 
 from PyQt6.QtWidgets import (
@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit, QFrame, QVBoxLayout, QHBoxLayout, QGridLayout,
 )
 
-__all__ = ["setup_ui"]
+__all__ = ["setup_ui", "RESULT_TABS"]
 
 # Nombres de los botones de análisis (orden del grid 2x4)
 TOOL_BUTTONS = [
@@ -52,7 +52,7 @@ def setup_ui(window: QWidget) -> None:
     main_layout.setSpacing(24)
     main_layout.setContentsMargins(32, 32, 32, 24)
 
-    # ---------- 1. HEADER: título + legal + idioma + tema ----------
+    # ---------- 1. HEADER: título + legal + selector de idioma ----------
     header = QHBoxLayout()
     header.setSpacing(16)
 
@@ -73,16 +73,9 @@ def setup_ui(window: QWidget) -> None:
 
     combo_language = QComboBox(central)
     combo_language.setMinimumSize(140, 36)
-    combo_language.addItem("Español")
+    combo_language.addItem("Spanish")
     combo_language.addItem("English")
     header.addWidget(combo_language)
-
-    combo_theme = QComboBox(central)
-    combo_theme.setMinimumSize(130, 36)
-    combo_theme.addItem("Dark")
-    combo_theme.addItem("Light")
-    combo_theme.addItem("System")
-    header.addWidget(combo_theme)
 
     main_layout.addLayout(header)
 
@@ -182,6 +175,5 @@ def setup_ui(window: QWidget) -> None:
     window.label_title = label_title
     window.label_legal = label_legal
     window.comboLanguage = combo_language
-    window.comboTheme = combo_theme
     window.label_instrucciones = label_instrucciones
     window.entrada_dominio = entrada_dominio
