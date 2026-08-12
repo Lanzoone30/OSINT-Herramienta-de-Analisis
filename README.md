@@ -154,7 +154,42 @@ The application accepts multiple formats for each input field:
 
 The application is designed with a modular architecture that separates responsibilities, making maintenance and extension easier. The following diagram illustrates the main data flow and the interaction between components:
 
-![OSINT Technical Architecture](assets/images/architecture.png)
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff", "primaryColor": "#ffffff", "primaryTextColor": "#1f2328", "lineColor": "#57606a", "primaryBorderColor": "#afb8c1", "secondaryColor": "#f6f8fa"}}}%%
+flowchart TD
+    main["main.py<br/>entry point"] --> app["app.py<br/>bootstrap · QApplication · QSettings"]
+    mainmod["__main__.py<br/>python -m osint"] --> app
+
+    app --> apposint["AppOSINT<br/>Main Window · ui/main_window.py"]
+    app --> iconmgr["IconManager<br/>config.py"]
+
+    apposint --> uisupport["UI Support<br/>layout · themes · i18n · formatters"]
+    apposint --> coordinator["AnalysisCoordinator<br/>router · core/analyzer.py"]
+    apposint --> worker["WorkerThread<br/>QThread · core/worker.py"]
+    apposint --> history["AnalysisHistory<br/>models/history.py"]
+    apposint ==> export["export_results<br/>exporters/export.py · TXT/JSON/CSV"]
+
+    worker -.->|runs task| coordinator
+
+    subgraph services ["SERVICES (services/)"]
+        direction LR
+        geo["Geo"]
+        whois["Whois"]
+        ping["Ping"]
+        dns["DNS"]
+        ssl["SSL"]
+        headers["Headers"]
+        port["Port"]
+        reverse["Reverse DNS"]
+        basepy["base.py<br/>resolve_ip · http_get · report_footer"]
+    end
+
+    coordinator --> geo & whois & ping & dns & ssl & headers & port & reverse
+    geo & ssl & headers & reverse -.-> basepy
+
+    classDef focal fill:#fef3ec,stroke:#eb6c36,stroke-width:2px,color:#1f2328;
+    class coordinator,export focal;
+```
 
 ## Project Structure (`/src`)
 
