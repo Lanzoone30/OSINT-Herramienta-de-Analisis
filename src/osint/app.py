@@ -18,6 +18,10 @@ from osint.ui.main_window import AppOSINT
 
 def main() -> int:
     """Crear la aplicación Qt y mostrar la ventana principal."""
+    # Identidad para QSettings (persistir tema/idioma en todas las plataformas)
+    QApplication.setOrganizationName("OSINT")
+    QApplication.setApplicationName("OSINT-Analysis")
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")  # Estilo moderno
 
