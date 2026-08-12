@@ -1,20 +1,21 @@
 """
-themes.py - Sistema de temas para la interfaz (dark / light / system).
+themes.py - Tema oscuro fijo de la interfaz.
 
-Define las paletas de colores y genera el QSS completo que se aplica
-a toda la aplicación al cambiar de tema.
+Define la paleta de colores y genera el QSS completo que se aplica a
+toda la aplicacion. Aplica tambien un QPalette para que los dialogos
+nativos (QFileDialog, QMessageBox) respeten el tema.
 
 Why this design: Centraliza los colores en un solo lugar para que el
-theme switching sea un cambio de dict + regeneración de QSS, sin tocar
-el código de la ventana.
+estilo de la app sea un dict + regeneracion de QSS + QPalette, sin
+tocar el codigo de la ventana.
 """
 
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtGui import QPalette
+from PyQt6.QtGui import QPalette, QColor
 
-__all__ = ["apply_theme", "detect_system_theme", "get_theme"]
+__all__ = ["apply_theme", "STATUS_COLORS"]
 
-# Colores del indicador de estado por pestaña (mismo orden que tabWidget)
+# Colores del indicador de estado por pestana (mismo orden que tabWidget)
 STATUS_COLORS = [
     "#4CAF50",  # Geoloc.
     "#2196F3",  # WHOIS
@@ -27,6 +28,15 @@ STATUS_COLORS = [
     "#607D8B",  # Summary
 ]
 
+# Colores para mensajes de feedback (info / error / success / warning / danger).
+STATUS_STATE_COLORS = {
+    "info": "#4a90e2",
+    "error": "#f44336",
+    "success": "#4CAF50",
+    "warning": "#FF9800",
+    "danger": "#FF5722",
+}
+
 _THEMES = {
     "dark": {
         "bg_primary": "#0d0d0d",
@@ -36,8 +46,9 @@ _THEMES = {
         "bg_input": "#1a1a1a",
         "text_primary": "#e8e8e8",
         "text_secondary": "#ffffff",
-        "text_muted": "#666666",
+        "text_muted": "#888888",
         "text_placeholder": "#888888",
+        "text_warning": "#ff6b6b",
         "border": "#2a2a2a",
         "border_hover": "#3a3a3a",
         "tab_bg": "#141414",
@@ -49,60 +60,39 @@ _THEMES = {
         "selection_bg": "#3a3a3a",
         "selection_text": "#ffffff",
     },
-    "light": {
-        "bg_primary": "#f5f5f5",
-        "bg_secondary": "#ffffff",
-        "bg_tertiary": "#e8e8e8",
-        "bg_hover": "#e0e0e0",
-        "bg_input": "#ffffff",
-        "text_primary": "#1a1a1a",
-        "text_secondary": "#000000",
-        "text_muted": "#999999",
-        "text_placeholder": "#aaaaaa",
-        "border": "#d0d0d0",
-        "border_hover": "#b0b0b0",
-        "tab_bg": "#ececec",
-        "tab_active": "#ffffff",
-        "tab_text": "#666666",
-        "tab_text_active": "#111111",
-        "qtext_bg": "#ffffff",
-        "qtext_text": "#1a1a1a",
-        "selection_bg": "#2196F3",
-        "selection_text": "#ffffff",
-    },
 }
 
 
-def detect_system_theme() -> str:
-    """Detectar si el sistema operativo está en modo oscuro o claro.
-
-    Returns:
-        "dark" o "light" según el brillo de la paleta del sistema.
-    """
-    palette = QApplication.instance().palette()
-    window_color = palette.color(QPalette.ColorRole.Window)
-    return "dark" if window_color.lightness() < 128 else "light"
-
-
-def get_theme(name: str) -> dict:
-    """Resolver el tema, teniendo en cuenta que "system" se detecta en runtime.
+def _build_palette(theme: dict) -> QPalette:
+    """Crear un QPalette a partir del tema resuelto.
 
     Args:
-        name: Nombre del tema: "dark", "light" o "system".
+        theme: Dict con los colores del tema.
 
     Returns:
-        Dict con los colores del tema resuelto.
+        QPalette listo para aplicar con QApplication.setPalette().
     """
-    if name == "system":
-        return _THEMES[detect_system_theme()]
-    return _THEMES.get(name, _THEMES["dark"])
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.Window, QColor(theme["bg_primary"]))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor(theme["text_primary"]))
+    palette.setColor(QPalette.ColorRole.Base, QColor(theme["bg_input"]))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(theme["bg_secondary"]))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(theme["bg_secondary"]))
+    palette.setColor(QPalette.ColorRole.ToolTipText, QColor(theme["text_primary"]))
+    palette.setColor(QPalette.ColorRole.Text, QColor(theme["text_primary"]))
+    palette.setColor(QPalette.ColorRole.Button, QColor(theme["bg_secondary"]))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor(theme["text_primary"]))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(theme["selection_bg"]))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor(theme["selection_text"]))
+    palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(theme["text_placeholder"]))
+    return palette
 
 
 def build_qss(theme: dict) -> str:
-    """Generar el QSS completo de la aplicación a partir de una paleta.
+    """Generar el QSS completo de la aplicacion a partir de una paleta.
 
     Args:
-        theme: Dict de colores (ver get_theme).
+        theme: Dict de colores del tema oscuro fijo.
 
     Returns:
         String QSS listo para aplicar con app.setStyleSheet().
@@ -111,7 +101,8 @@ def build_qss(theme: dict) -> str:
 QMainWindow, QWidget {{
     background-color: {theme["bg_primary"]};
     color: {theme["text_primary"]};
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', 'Ubuntu', 'Cantarell', 'Helvetica Neue', sans-serif;
+    outline: none;
 }}
 
 QLabel {{
@@ -135,7 +126,7 @@ QLabel[labelClass="subtitle"] {{
 QLabel[labelClass="legal"] {{
     font-size: 8pt;
     font-style: italic;
-    color: #ff6b6b;
+    color: {theme["text_warning"]};
 }}
 
 QLabel[labelClass="results"] {{
@@ -162,6 +153,8 @@ QLineEdit {{
     padding: 12px;
     font-size: 11pt;
     min-height: 22px;
+    selection-background-color: {theme["selection_bg"]};
+    selection-color: {theme["selection_text"]};
 }}
 
 QLineEdit:focus {{
@@ -185,6 +178,10 @@ QPushButton:hover {{
 
 QPushButton:pressed {{
     background-color: {theme["bg_tertiary"]};
+}}
+
+QPushButton:focus {{
+    border-color: {theme["border_hover"]};
 }}
 
 QPushButton[toolButton="true"] {{
@@ -212,6 +209,10 @@ QComboBox {{
     min-width: 120px;
 }}
 
+QComboBox:focus {{
+    border-color: {theme["border_hover"]};
+}}
+
 QComboBox::drop-down {{
     border: none;
     width: 24px;
@@ -225,6 +226,7 @@ QComboBox QAbstractItemView {{
     border: 1px solid {theme["border"]};
     border-radius: 6px;
     padding: 4px;
+    outline: none;
 }}
 
 QTabWidget::pane {{
@@ -249,6 +251,10 @@ QTabBar::tab {{
 QTabBar::tab:selected {{
     background-color: {theme["tab_active"]};
     color: {theme["tab_text_active"]};
+}}
+
+QTabBar::tab:focus {{
+    outline: none;
 }}
 
 QPlainTextEdit {{
@@ -282,23 +288,88 @@ QScrollBar::handle:vertical:hover {{
     background-color: {theme["border_hover"]};
 }}
 
+QScrollBar:horizontal {{
+    background-color: {theme["bg_primary"]};
+    height: 10px;
+    border-radius: 5px;
+}}
+
+QScrollBar::handle:horizontal {{
+    background-color: {theme["bg_tertiary"]};
+    border-radius: 5px;
+    min-width: 30px;
+}}
+
+QScrollBar::handle:horizontal:hover {{
+    background-color: {theme["border_hover"]};
+}}
+
 QScrollBar::add-line, QScrollBar::sub-line {{
     height: 0;
     width: 0;
 }}
+
+QToolTip {{
+    background-color: {theme["bg_secondary"]};
+    color: {theme["text_primary"]};
+    border: 1px solid {theme["border"]};
+    border-radius: 4px;
+    padding: 4px 8px;
+}}
+
+QMenu {{
+    background-color: {theme["bg_secondary"]};
+    color: {theme["text_primary"]};
+    border: 1px solid {theme["border"]};
+    border-radius: 4px;
+    padding: 4px;
+}}
+
+QMenu::item {{
+    padding: 6px 20px;
+    border-radius: 3px;
+}}
+
+QMenu::item:selected {{
+    background-color: {theme["selection_bg"]};
+    color: {theme["selection_text"]};
+}}
+
+QMenu::separator {{
+    height: 1px;
+    background: {theme["border"]};
+    margin: 4px 8px;
+}}
+
+QMessageBox, QProgressDialog, QInputDialog {{
+    background-color: {theme["bg_secondary"]};
+    color: {theme["text_primary"]};
+}}
+
+QMessageBox QLabel, QProgressDialog QLabel, QInputDialog QLabel {{
+    color: {theme["text_primary"]};
+}}
+
+QListView {{
+    background-color: {theme["bg_input"]};
+    color: {theme["text_primary"]};
+    border: 1px solid {theme["border"]};
+    selection-background-color: {theme["selection_bg"]};
+    selection-color: {theme["selection_text"]};
+    outline: none;
+}}
 """
 
 
-def apply_theme(app: QApplication, name: str) -> str:
-    """Aplicar un tema a la aplicación.
+def apply_theme(app: QApplication) -> None:
+    """Aplicar el tema oscuro fijo a la aplicacion.
+
+    Aplica tanto el QSS (para widgets nativos de Qt) como el QPalette
+    (para dialogos nativos que ignoran QSS, ej. QFileDialog).
 
     Args:
         app: Instancia de QApplication.
-        name: Nombre del tema: "dark", "light" o "system".
-
-    Returns:
-        El nombre del tema resuelto (útil para "system").
     """
-    resolved = get_theme(name)
-    app.setStyleSheet(build_qss(resolved))
-    return name
+    theme = _THEMES["dark"]
+    app.setStyleSheet(build_qss(theme))
+    app.setPalette(_build_palette(theme))
