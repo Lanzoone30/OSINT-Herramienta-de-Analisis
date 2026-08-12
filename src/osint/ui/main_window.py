@@ -3,7 +3,7 @@ from datetime import datetime
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QMessageBox,
                             QFileDialog, QInputDialog, QProgressDialog)
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QSettings
 from PyQt6.QtGui import QTextCursor, QIcon
 
 from osint.core.worker import WorkerThread
@@ -12,11 +12,18 @@ from osint.models.history import AnalysisHistory
 from osint.exporters.export import export_results
 from osint.ui.formatters import build_summary, build_history_text
 from osint.ui.i18n import Translations
-from osint.ui.layout import setup_ui
-from osint.ui.themes import apply_theme
+from osint.ui.layout import setup_ui, RESULT_TABS
+from osint.ui.themes import apply_theme, STATUS_STATE_COLORS
 from osint.config import IconManager
 
 class AppOSINT(QMainWindow):
+    """Ventana principal de la herramienta OSINT.
+
+    Orquesta la UI (construida en layout.py), la lógica de análisis
+    (AnalysisCoordinator), el historial y la exportación. Es el punto de
+    unión entre la capa de presentación y la de dominio: conecta señales,
+    despacha trabajos a hilos y traduce resultados a la interfaz.
+    """
 
     # Tamaño fijo de la ventana: (ancho, alto) en píxeles
     WINDOW_SIZE = (900, 910)
@@ -27,18 +34,31 @@ class AppOSINT(QMainWindow):
         # Configurar UI construida en Python (reemplaza el .ui de Qt Designer)
         setup_ui(self)
 
-        # Aplicar tema por defecto (dark)
-        apply_theme(QApplication.instance(), "dark")
+        # Cargar preferencias persistentes (idioma); English por defecto si no hay valor guardado.
+        settings = QSettings()
+        saved_language = settings.value("ui/language", "en", type=str)
+
+        # Aplicar tema oscuro fijo (predefinido de la app)
+        apply_theme(QApplication.instance())
 
         # Configurar ventana principal
-        self.setWindowTitle("OSINT - Herramienta de Analisis de Redes")
-        self.setFixedSize(*self.WINDOW_SIZE)  # Tamaño fijo para consistencia visual
+        self.setWindowTitle(Translations.resolve("ui.window_title", saved_language))
 
-        # Prohibir maximizar: elimina el botón de maximizar de la barra de título
+        # 1. Window flags PRIMERO (antes de cualquier size constraint).
+        # En Wayland/WSLg, setWindowFlags puede recrear la ventana, perdiendo
+        # el setFixedSize si se aplica despues.
         self.setWindowFlags(
             self.windowFlags() & ~Qt.WindowType.WindowMaximizeButtonHint
         )
-        
+
+        # 2. Fixed size DESPUES (sobrevive el recreate del flag change)
+        self.setFixedSize(*self.WINDOW_SIZE)  # Tamaño fijo para consistencia visual
+
+        # 3. Maximum size como backup para WMs que ignoran WindowMaximizeButtonHint
+        # (Wayland/WSLg a veces ignora el hint). Esto limita el tamaño máximo
+        # incluso si el compositor intenta maximizar.
+        self.setMaximumSize(*self.WINDOW_SIZE)
+
         # Configurar icono usando IconManager
         app_icon = IconManager.get_app_icon()
         if not app_icon.isNull():
@@ -49,29 +69,30 @@ class AppOSINT(QMainWindow):
                 self.setWindowIcon(QIcon("assets/icon_app.ico"))
             except OSError:
                 pass
-        
+
         # Inicializar estado de la aplicación
         self.current_target = ""
         self.history = AnalysisHistory(max_entries=50)  # Historial con límite
         self.results_data = {}
-        self.current_language = "es"  # Español por defecto
-        
+        self.current_language = saved_language  # Desde QSettings (fallback "en")
+
         # Configurar todas las conexiones de botones
         self.setup_connections()
-        
+
         # Configurar estado inicial
         self.setup_initial_state()
-        
+
         # Configurar iconos
         self.setup_icons()
-        
-        print("Aplicación inicializada correctamente")
 
-    def resizeEvent(self, event):
-        # Forzar el tamaño fijo incluso si el gestor de ventanas (WM)
-        # intenta redimensionar (necesario en Linux/Wayland/WSLg)
-        self.resize(*self.WINDOW_SIZE)
-        super().resizeEvent(event)
+    def changeEvent(self, event):
+        # En Wayland/WSLg el compositor puede ofrecer maximizar pese al flag.
+        # Si la ventana se maximiza, forzamos volver a tamaño normal para
+        # evitar el bucle de configure/resize que crashea en WSLg.
+        from PyQt6.QtCore import QEvent
+        if event.type() == QEvent.Type.WindowStateChange and self.isMaximized():
+            self.showNormal()
+        super().changeEvent(event)
 
     def setup_connections(self):
         # Configurar todas las conexiones de señales
@@ -95,125 +116,119 @@ class AppOSINT(QMainWindow):
         
         # Otros controles
         self.entrada_dominio.returnPressed.connect(lambda: self.run_analysis("geo"))
-        self.comboLanguage.currentTextChanged.connect(self.change_language)
-        self.comboTheme.currentTextChanged.connect(self.change_theme)
-        self.tabWidget.currentChanged.connect(self.update_risk_indicator)
+        # Usar 'textActivated' (no 'currentTextChanged'): se emite solo cuando
+        # el usuario selecciona un item del popup, ya en proceso de cierre.
+        # Evita que el popup quede abierto en algunos WMs (Linux/Wayland).
+        self.comboLanguage.textActivated.connect(self.change_language)
+        self.tabWidget.currentChanged.connect(self.on_tab_changed)
 
-    def change_theme(self, theme_name):
-        # Cambiar el tema de la aplicación (dark / light / system)
-        app = QApplication.instance()
-        apply_theme(app, theme_name.lower())
-    
     def setup_initial_state(self):
-        # Configurar el estado inicial de la aplicación
-        self.apply_translations(Translations.get_spanish())  # Español por defecto
-        self.update_risk_indicator(0)  # Indicador en primera pestaña
-        self.update_text_placeholders()  # Placeholders en español
-    
+        # Sincroniza el combo con el idioma persistido (0=Spanish, 1=English).
+        self.comboLanguage.setCurrentIndex(0 if self.current_language == "es" else 1)
+        self.apply_translations(Translations.get(self.current_language))
+        self.set_status("ready")  # Barra de estado: Listo
+        self.update_text_placeholders()
+
     def setup_icons(self):
         # Configurar todos los iconos usando IconManager
         IconManager.setup_all_button_icons(self)
         IconManager.setup_all_tab_icons(self)
-    
+
+    def tr_key(self, key, **kwargs):
+        # Resuelve una clave de i18n al idioma actual. "default" (kwarg) es
+        # el fallback cuando la clave no existe. kwargs alimenta .format().
+        default = kwargs.pop("default", key)
+        value = Translations.resolve(key, self.current_language, **kwargs)
+        return value if value != key else default
+
+    def get_text_widgets(self):
+        return [getattr(self, name) for name in RESULT_TABS]
+
     def apply_translations(self, translations):
         # Aplicar los textos traducidos a la interfaz (ES o EN)
-        # Textos principales
-        self.label_title.setText(translations["ui"]["title"])
-        self.label_legal.setText(translations["ui"]["legal"])
-        self.label_instrucciones.setText(translations["ui"]["instructions"])
-        self.entrada_dominio.setPlaceholderText(translations["ui"]["placeholder"])
-        self.label_risk.setText(translations["ui"]["risk"])
-        self.label_risk_text.setText(translations["ui"]["risk_inactive"])
+        ui = translations["ui"]
+        buttons = translations["buttons"]
+        tooltips = translations["tooltips"]
 
-        # Botones de herramientas
-        self.btn_geo.setText(translations["buttons"]["geo"])
-        self.btn_whois.setText(translations["buttons"]["whois"])
-        self.btn_ping.setText(translations["buttons"]["ping"])
-        self.btn_dns.setText(translations["buttons"]["dns"])
-        self.btn_ssl.setText(translations["buttons"]["ssl"])
-        self.btn_headers.setText(translations["buttons"]["headers"])
-        self.btn_portscan.setText(translations["buttons"]["portscan"])
-        self.btn_reverse.setText(translations["buttons"]["reverse"])
+        # Textos principales
+        self.label_title.setText(ui["title"])
+        self.label_legal.setText(ui["legal"])
+        self.label_instrucciones.setText(ui["instructions"])
+        self.entrada_dominio.setPlaceholderText(ui["placeholder"])
+        self.label_risk.setText(ui["risk"])
+        self.label_risk_text.setText(ui["ready"])
+        self.setWindowTitle(ui["window_title"])
+
+        # Botones de herramientas (texto + tooltip)
+        self.btn_geo.setText(buttons["geo"])
+        self.btn_geo.setToolTip(tooltips["geo"])
+        self.btn_whois.setText(buttons["whois"])
+        self.btn_whois.setToolTip(tooltips["whois"])
+        self.btn_ping.setText(buttons["ping"])
+        self.btn_ping.setToolTip(tooltips["ping"])
+        self.btn_dns.setText(buttons["dns"])
+        self.btn_dns.setToolTip(tooltips["dns"])
+        self.btn_ssl.setText(buttons["ssl"])
+        self.btn_ssl.setToolTip(tooltips["ssl"])
+        self.btn_headers.setText(buttons["headers"])
+        self.btn_headers.setToolTip(tooltips["headers"])
+        self.btn_portscan.setText(buttons["portscan"])
+        self.btn_portscan.setToolTip(tooltips["portscan"])
+        self.btn_reverse.setText(buttons["reverse"])
+        self.btn_reverse.setToolTip(tooltips["reverse"])
 
         # Botones de acción
-        self.btn_quick.setText(translations["buttons"]["quick"])
-        self.btn_export.setText(translations["buttons"]["export"])
-        self.btn_clear.setText(translations["buttons"]["clear"])
+        self.btn_quick.setText(buttons["quick"])
+        self.btn_quick.setToolTip(tooltips["quick"])
+        self.btn_export.setText(buttons["export"])
+        self.btn_export.setToolTip(tooltips["export"])
+        self.btn_clear.setText(buttons["clear"])
+        self.btn_clear.setToolTip(tooltips["clear"])
 
-        # Tooltips
-        self.btn_history.setToolTip(translations["tooltips"]["history"])
-        self.btn_export.setToolTip(translations["tooltips"]["export"])
-        self.btn_clear.setToolTip(translations["tooltips"]["clear"])
-        self.btn_copy.setToolTip(translations["tooltips"]["copy"])
-        self.btn_clear_results.setToolTip(translations["tooltips"]["clear_results"])
+        # Botones de iconos con texto
+        self.btn_history.setText(buttons["history"])
+        self.btn_history.setToolTip(tooltips["history"])
+        self.btn_copy.setText(buttons["copy"])
+        self.btn_copy.setToolTip(tooltips["copy"])
+        self.btn_clear_results.setText(buttons["clear_results"])
+        self.btn_clear_results.setToolTip(tooltips["clear_results"])
 
         # Pestañas
         for i, tab_name in enumerate(translations["tabs"]):
             self.tabWidget.setTabText(i, tab_name)
 
         # Textos de resultados y créditos
-        self.label_results.setText(translations["results"])
-        self.label_creditos_2.setText(translations["credits"])
-    
+        self.label_results.setText(ui["results"])
+        self.label_creditos_2.setText(ui["credits"])
+
     def update_text_placeholders(self):
-        # Actualizar placeholders según idioma
-        if self.current_language == "es":
-            placeholders = [
-                "Los resultados de geolocalización aparecerán aquí...",
-                "Los resultados WHOIS aparecerán aquí...",
-                "Los resultados de ping/traceroute aparecerán aquí...",
-                "Los resultados DNS aparecerán aquí...",
-                "Los resultados SSL/TLS aparecerán aquí...",
-                "Los resultados de headers HTTP aparecerán aquí...",
-                "Los resultados de port scan aparecerán aquí...",
-                "Los resultados de reverse IP aparecerán aquí...",
-                "El resumen de análisis aparecerá aquí..."
-            ]
-        else:
-            placeholders = [
-                "Geolocation results will appear here...",
-                "WHOIS results will appear here...",
-                "Ping/traceroute results will appear here...",
-                "DNS results will appear here...",
-                "SSL/TLS results will appear here...",
-                "HTTP headers results will appear here...",
-                "Port scan results will appear here...",
-                "Reverse IP results will appear here...",
-                "Analysis summary will appear here..."
-            ]
-        
-        text_widgets = [
-            self.text_geo, self.text_whois, self.text_ping,
-            self.text_dns, self.text_ssl, self.text_headers,
-            self.text_portscan, self.text_reverse, self.text_summary
-        ]
-        
-        for widget, placeholder in zip(text_widgets, placeholders):
+        # Actualizar placeholders segun idioma (unica fuente: Translations)
+        placeholders = Translations.get(self.current_language)["placeholders"]
+        for widget, placeholder in zip(self.get_text_widgets(), placeholders):
             widget.setPlaceholderText(placeholder)
     
     def get_target(self):
-        # Obtener y validar el objetivo del campo de entrada
+        # Lee el campo, valida no-vacío y limpia esquema/www antes de devolverlo.
         target = self.entrada_dominio.text().strip()
-        
+
         if not target:
-            if self.current_language == "es":
-                QMessageBox.warning(self, "Campo vacío", 
-                                   "Por favor, ingresa una IP, dominio o URL")
-            else:
-                QMessageBox.warning(self, "Empty field", 
-                                   "Please enter an IP, domain or URL")
+            QMessageBox.warning(
+                self,
+                self.tr_key("dialogs.empty_title"),
+                self.tr_key("dialogs.empty_message")
+            )
             return None
-        
+
         # Limpiar y normalizar el objetivo
         target = target.replace("https://", "").replace("http://", "")
         if target.startswith("www."):
             target = target[4:]
-        
+
         self.current_target = target
         return target
     
     def run_analysis(self, analysis_type):
-        # Ejecutar un análisis específico
+        # Valida, cambia a la pestaña y delega el trabajo bloqueante a WorkerThread.
         target = self.get_target()
         if not target:
             return
@@ -227,10 +242,7 @@ class AppOSINT(QMainWindow):
             self.tabWidget.setCurrentIndex(tab_index[analysis_type])
         
         # Mostrar progreso
-        if self.current_language == "es":
-            self.show_progress(f"Iniciando análisis de {analysis_type}...")
-        else:
-            self.show_progress(f"Starting {analysis_type} analysis...")
+        self.show_progress(self.tr_key("status.starting", analysis=analysis_type))
         
         # Ejecutar en hilo separado
         self.worker = WorkerThread(self.perform_analysis, analysis_type, target)
@@ -240,62 +252,88 @@ class AppOSINT(QMainWindow):
         self.worker.start()
     
     def perform_analysis(self, analysis_type, target):
-        # Realizar el análisis (ejecutado en hilo separado)
+        # Ejecutado en hilo separado; delega al coordinador de dominio.
         return AnalysisCoordinator.perform_analysis(analysis_type, target, self.current_language)
     
     def run_complete_analysis(self):
-        # Ejecutar todos los análisis en secuencia
         target = self.get_target()
         if not target:
             return
-        
-        # Crear diálogo de progreso
-        if self.current_language == "es":
-            progress = QProgressDialog("Ejecutando análisis completo...", "Cancelar", 0, 8, self)
-        else:
-            progress = QProgressDialog("Running complete analysis...", "Cancel", 0, 8, self)
+
+        # Crear diálogo de progreso (se actualiza via signals del worker)
+        progress = QProgressDialog(
+            self.tr_key("dialogs.progress_title"),
+            self.tr_key("dialogs.progress_cancel"),
+            0, 8, self
+        )
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()
-        
-        # Lista de análisis a ejecutar
-        analyses = ["geo", "whois", "ping", "dns", "ssl", "headers", "portscan", "reverse"]
-        
-        # Ejecutar cada análisis secuencialmente
-        for i, analysis_type in enumerate(analyses):
-            if progress.wasCanceled():
-                break
-            
-            progress.setValue(i)
-            if self.current_language == "es":
-                progress.setLabelText(f"Analizando {analysis_type}...")
-            else:
-                progress.setLabelText(f"Analyzing {analysis_type}...")
-            QApplication.processEvents()
-            
-            try:
-                result = self.perform_analysis(analysis_type, target)
-                self.display_results(analysis_type, result)
-            except Exception as e:
-                self.show_error(str(e))
-        
+
+        # Crear worker en hilo separado (no bloquea UI)
+        self.complete_worker = WorkerThread(
+            self._complete_analysis_task, target
+        )
+        # Flag compartida para cancelación (UI -> worker)
+        self.complete_worker.cancel_flag = False
+        progress.canceled.connect(lambda: setattr(self.complete_worker, "cancel_flag", True))
+
+        # Conectar signals a handlers UI (thread-safe via queued connections)
+        self.complete_worker.progress.connect(
+            lambda idx, label: self._on_complete_progress(progress, idx, label)
+        )
+        self.complete_worker.item_ready.connect(
+            lambda atype, result: self.display_results(atype, result)
+        )
+        self.complete_worker.finished.connect(
+            lambda _: self._on_complete_finished(progress, target)
+        )
+        self.complete_worker.error.connect(
+            lambda msg: self.show_error(msg)
+        )
+
+        self.complete_worker.start()
+
+    def _on_complete_progress(self, progress, index, label):
+        # Handler UI: actualizar dialogo (corre en hilo principal)
+        progress.setValue(index)
+        progress.setLabelText(label)
+
+    def _on_complete_finished(self, progress, target):
+        # Handler UI: finalizar dialogo + generar resumen
         progress.setValue(8)
-        
-        # Generar resumen final
         self.generate_summary()
         self.tabWidget.setCurrentIndex(8)
-        
-        # Actualizar historial
-        self.history.add_entry(target, "complete_analysis" if self.current_language == "en" else "análisis_completo")
+        self.history.add_entry(target, self.tr_key("history_types.complete"))
+
+    def _complete_analysis_task(self, target):
+        # Corre en WorkerThread: emite progress()/item_ready() al hilo principal.
+        # Cancelación vía flag compartido sondeado entre análisis (no a mitad de HTTP).
+        analyses = ["geo", "whois", "ping", "dns", "ssl", "headers", "portscan", "reverse"]
+        for i, analysis_type in enumerate(analyses):
+            if self.complete_worker.cancel_flag:
+                break
+
+            label = Translations.resolve(
+                "dialogs.progress_label",
+                self.current_language,
+                analysis=analysis_type,
+            )
+            self.complete_worker.progress.emit(i, label)
+
+            result = self.perform_analysis(analysis_type, target)
+            self.complete_worker.item_ready.emit(analysis_type, result)
+
+        return None
     
     def generate_summary(self):
         # Generar resumen de todos los análisis realizados
         sections = [
-            ("Geolocalización" if self.current_language == "es" else "Geolocation", self.text_geo.toPlainText()),
+            (self.tr_key("section_labels.geo"), self.text_geo.toPlainText()),
             ("WHOIS", self.text_whois.toPlainText()),
             ("Ping", self.text_ping.toPlainText()),
             ("DNS", self.text_dns.toPlainText()),
             ("SSL/TLS", self.text_ssl.toPlainText()),
-            ("Headers HTTP" if self.current_language == "es" else "HTTP Headers", self.text_headers.toPlainText()),
+            (self.tr_key("section_labels.headers"), self.text_headers.toPlainText()),
             ("Port Scan", self.text_portscan.toPlainText()),
             ("Reverse IP", self.text_reverse.toPlainText())
         ]
@@ -306,7 +344,6 @@ class AppOSINT(QMainWindow):
         self.text_summary.setPlainText(summary)
     
     def display_results(self, analysis_type, result):
-        # Mostrar resultados en la pestaña correspondiente
         text_widgets = {
             "geo": self.text_geo,
             "whois": self.text_whois,
@@ -326,62 +363,62 @@ class AppOSINT(QMainWindow):
             cursor.movePosition(QTextCursor.MoveOperation.Start)
             text_widgets[analysis_type].setTextCursor(cursor)
         
-        # Actualizar indicador de riesgo
-        self.update_risk_indicator(self.tabWidget.currentIndex())
-        
-        # Añadir al historial
+            # Análisis completado: barra de estado en verde (success)
+            self.set_status("success", self.tr_key("status_success", default="Completado"))
+
+        # Registrar la entrada en el historial de análisis
         self.history.add_entry(self.current_target, analysis_type)
-    
+
     def show_progress(self, message):
-        # Mostrar mensaje de progreso
-        self.label_risk_text.setText(f"• {message}")
-        self.label_risk_text.setStyleSheet("color: #4a90e2;")
-    
+        # Mostrar mensaje de progreso (estado "running" / azul)
+        self.set_status("running", message)
+
     def update_progress(self, value, message):
         # Actualizar indicador de progreso
-        self.label_risk_text.setText(f"• {message} ({value}%)")
-    
-    def update_risk_indicator(self, index):
-        # Actualizar indicador de riesgo basado en pestaña activa
-        colors = ["#4CAF50", "#2196F3", "#FF9800", "#9C27B0",
-                 "#3F51B5", "#00BCD4", "#FF5722", "#795548", "#607D8B"]
-        
-        if index < len(colors):
-            color = colors[index]
-            
-            # Aplicar color al indicador visual
-            self.riskIndicator.setStyleSheet(f"QFrame {{ background-color: {color}; border-radius: 4px; }}")
-            self.label_risk_text.setStyleSheet(f"font-size: 11pt; font-weight: 600; color: {color};")
-            
-            # Actualizar texto según idioma
-            if self.current_language == "es":
-                tab_names = ["Geolocalización", "WHOIS", "Ping", "DNS", 
-                            "SSL/TLS", "Headers", "Port Scan", "Reverse IP", "Resumen"]
-            else:
-                tab_names = ["Geolocation", "WHOIS", "Ping", "DNS", 
-                            "SSL/TLS", "Headers", "Port Scan", "Reverse IP", "Summary"]
-            
-            if index < len(tab_names):
-                self.label_risk_text.setText(f"• {tab_names[index]}")
+        self.set_status("running", f"{message} ({value}%)")
+
+    def set_status(self, state, message=None):
+        """Barra de estado: indica ready / problemas / fallo mediante color + texto.
+
+        Args:
+            state: "ready" (verde), "running" (azul), "warning" (naranja),
+                   "error" (rojo), "success" (verde).
+            message: Texto opcional. Si es None, se usa el texto por defecto
+                     del idioma actual (status_ready / status_running / etc.).
+        """
+        color = STATUS_STATE_COLORS.get(state, STATUS_STATE_COLORS["info"])
+        # Indicador visual (cuadrito) cambia de color segun estado
+        self.riskIndicator.setStyleSheet(
+            f"QFrame {{ background-color: {color}; border-radius: 4px; }}"
+        )
+        # Texto de estado
+        if message is None:
+            message = self.tr_key(f"ui.status_{state}", default=state)
+        self.label_risk_text.setText(message)
+        self.label_risk_text.setStyleSheet(f"color: {color}; font-weight: 600;")
+
+    def on_tab_changed(self, index):
+        # Al cambiar de pestaña NO se sobreescribe el status operativo.
+        # El status (ready/error/running) es independiente de la navegación.
+        pass
     
     def show_error(self, error_message):
-        # Mostrar mensaje de error
-        if self.current_language == "es":
-            QMessageBox.critical(self, "Error en análisis", f"Ocurrió un error:\n\n{error_message}")
-            self.label_risk_text.setText("• Error en análisis")
-        else:
-            QMessageBox.critical(self, "Analysis Error", f"An error occurred:\n\n{error_message}")
-            self.label_risk_text.setText("• Analysis Error")
-        
-        self.label_risk_text.setStyleSheet("color: #f44336;")
+        # Mostrar mensaje de error (barra de estado en rojo)
+        QMessageBox.critical(
+            self,
+            self.tr_key("dialogs.error_title"),
+            self.tr_key("dialogs.error_message", message=error_message)
+        )
+        self.set_status("error", self.tr_key("dialogs.error_title"))
     
     def show_history(self):
         # Mostrar historial de análisis
         if self.history.count() == 0:
-            if self.current_language == "es":
-                QMessageBox.information(self, "Historial", "No hay análisis en el historial.")
-            else:
-                QMessageBox.information(self, "History", "No analysis in history.")
+            QMessageBox.information(
+                self,
+                self.tr_key("dialogs.history_empty_title"),
+                self.tr_key("dialogs.history_empty_message")
+            )
             return
 
         history_text = build_history_text(self.history.get_history(), self.current_language)
@@ -393,132 +430,93 @@ class AppOSINT(QMainWindow):
     def copy_results(self):
         # Copiar resultados de pestaña actual al portapapeles
         current_index = self.tabWidget.currentIndex()
-        
-        text_widgets = [
-            self.text_geo, self.text_whois, self.text_ping,
-            self.text_dns, self.text_ssl, self.text_headers,
-            self.text_portscan, self.text_reverse, self.text_summary
-        ]
-        
+        text_widgets = self.get_text_widgets()
+
         if current_index < len(text_widgets):
             text = text_widgets[current_index].toPlainText()
-            
+
             if text:
                 QApplication.clipboard().setText(text)
-                
-                if self.current_language == "es":
-                    self.label_risk_text.setText("• Resultados copiados")
-                else:
-                    self.label_risk_text.setText("• Results copied")
-                self.label_risk_text.setStyleSheet("color: #4CAF50;")
-                
-                # Restaurar estado original después de 2 segundos
-                QTimer.singleShot(2000, lambda: self.update_risk_indicator(current_index))
-    
+
+                self.set_status("success", self.tr_key("dialogs.copy_success"))
+
+                # Restaurar a "ready" después de 2 segundos
+                QTimer.singleShot(2000, lambda: self.set_status("ready"))
+
     def clear_current_tab(self):
         # Limpiar resultados de pestaña actual
         current_index = self.tabWidget.currentIndex()
-        
-        text_widgets = [
-            self.text_geo, self.text_whois, self.text_ping,
-            self.text_dns, self.text_ssl, self.text_headers,
-            self.text_portscan, self.text_reverse, self.text_summary
-        ]
-        
+        text_widgets = self.get_text_widgets()
+
         if current_index < len(text_widgets):
             text_widgets[current_index].clear()
-            
-            if self.current_language == "es":
-                self.label_risk_text.setText("• Resultados limpiados")
-            else:
-                self.label_risk_text.setText("• Results cleared")
-            self.label_risk_text.setStyleSheet("color: #FF9800;")
-            
-            # Restaurar estado original después de 2 segundos
-            QTimer.singleShot(2000, lambda: self.update_risk_indicator(current_index))
-    
+
+            self.set_status("warning", self.tr_key("dialogs.clear_success"))
+
+            # Restaurar a "ready" después de 2 segundos
+            QTimer.singleShot(2000, lambda: self.set_status("ready"))
+
     def clear_all(self):
         # Limpiar todos los resultados y campo de entrada
-        if self.current_language == "es":
-            reply = QMessageBox.question(self, "Limpiar todo",
-                                       "¿Estás seguro de que quieres limpiar todos los resultados?",
-                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        else:
-            reply = QMessageBox.question(self, "Clear All",
-                                       "Are you sure you want to clear all results?",
-                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        
+        reply = QMessageBox.question(
+            self,
+            self.tr_key("dialogs.clear_all_title"),
+            self.tr_key("dialogs.clear_all_message"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
         if reply == QMessageBox.StandardButton.Yes:
             # Limpiar campo de entrada
             self.entrada_dominio.clear()
             self.current_target = ""
-            
-            # Lista de todos los widgets de texto
-            text_widgets = [
-                self.text_geo, self.text_whois, self.text_ping,
-                self.text_dns, self.text_ssl, self.text_headers,
-                self.text_portscan, self.text_reverse, self.text_summary
-            ]
-            
+
             # Limpiar todos los widgets
-            for widget in text_widgets:
+            for widget in self.get_text_widgets():
                 widget.clear()
-            
+
             # Restaurar placeholders
             self.update_text_placeholders()
-            
+
             # Mostrar confirmación
-            if self.current_language == "es":
-                self.label_risk_text.setText("• Todo limpiado")
-            else:
-                self.label_risk_text.setText("• All cleared")
-            self.label_risk_text.setStyleSheet("color: #FF5722;")
-            
-            # Restaurar estado original después de 2 segundos
-            QTimer.singleShot(2000, lambda: self.update_risk_indicator(0))
+            self.set_status("danger", self.tr_key("dialogs.all_cleared"))
+
+            # Restaurar a "ready" después de 2 segundos
+            QTimer.singleShot(2000, lambda: self.set_status("ready"))
     
     def export_results(self):
-        # Exportar resultados a diferentes formatos
         if not self.current_target:
-            if self.current_language == "es":
-                QMessageBox.warning(self, "Sin datos", "No hay resultados para exportar.")
-            else:
-                QMessageBox.warning(self, "No data", "No results to export.")
+            QMessageBox.warning(
+                self,
+                self.tr_key("dialogs.no_data_title"),
+                self.tr_key("dialogs.no_data_message")
+            )
             return
-        
+
         # Formatos disponibles
         formats = ["TXT", "CSV", "JSON"]
-        
+
         # Seleccionar formato
-        if self.current_language == "es":
-            format_choice, ok = QInputDialog.getItem(
-                self, "Exportar resultados", "Selecciona formato:", formats, 0, False
-            )
-        else:
-            format_choice, ok = QInputDialog.getItem(
-                self, "Export Results", "Select format:", formats, 0, False
-            )
-        
+        format_choice, ok = QInputDialog.getItem(
+            self,
+            self.tr_key("dialogs.input_format_title"),
+            self.tr_key("dialogs.input_format_label"),
+            formats, 0, False
+        )
+
         if not ok:
             return
-        
+
         # Elegir ubicación para guardar
-        if self.current_language == "es":
-            filename, _ = QFileDialog.getSaveFileName(
-                self, "Guardar resultados",
-                f"osint_analysis_{self.current_target}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                f"{format_choice} Files (*.{format_choice.lower()})"
-            )
-        else:
-            filename, _ = QFileDialog.getSaveFileName(
-                self, "Save Results",
-                f"osint_analysis_{self.current_target}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                f"{format_choice} Files (*.{format_choice.lower()})"
-            )
-        
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            self.tr_key("dialogs.input_format_title"),
+            f"osint_analysis_{self.current_target}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            f"{format_choice} Files (*.{format_choice.lower()})"
+        )
+
         if not filename:
             return
-        
+
         try:
             # Recopilar todos los resultados
             all_results = {
@@ -534,38 +532,42 @@ class AppOSINT(QMainWindow):
                 "reverse": self.text_reverse.toPlainText(),
                 "summary": self.text_summary.toPlainText()
             }
-            
+
             # Exportar según formato seleccionado
             export_results(all_results, filename, format_choice.lower(), self.current_language)
-            
+
             # Mostrar confirmación
-            if self.current_language == "es":
-                QMessageBox.information(self, "Exportación exitosa", 
-                                      f"Resultados exportados a:\n{filename}")
-            else:
-                QMessageBox.information(self, "Export Successful", 
-                                      f"Results exported to:\n{filename}")
-            
+            QMessageBox.information(
+                self,
+                self.tr_key("dialogs.export_success_title"),
+                self.tr_key("dialogs.export_success_message", path=filename)
+            )
+
         except Exception as e:
             # Mostrar error
-            if self.current_language == "es":
-                QMessageBox.critical(self, "Error en exportación", 
-                                   f"No se pudo exportar: {str(e)}")
-            else:
-                QMessageBox.critical(self, "Export Error", 
-                                   f"Could not export: {str(e)}")
-    
+            QMessageBox.critical(
+                self,
+                self.tr_key("dialogs.export_error_title"),
+                self.tr_key("dialogs.export_error_message", message=str(e))
+            )
+
     def change_language(self, language):
-        # Cambiar idioma de la interfaz
-        if "Español" in language:
+        # Diferir con QTimer: dejar que Qt cierre el popup y evitar "fantasma" en WSLg/Wayland.
+        QTimer.singleShot(0, lambda: self._apply_language(language))
+
+    def _apply_language(self, language):
+        if "Spanish" in language:
             self.current_language = "es"
-            self.apply_translations(Translations.get_spanish())
         else:
             self.current_language = "en"
-            self.apply_translations(Translations.get_english())
-        
+
+        QSettings().setValue("ui/language", self.current_language)
+        self.apply_translations(Translations.get(self.current_language))
+
         # Actualizar placeholders según nuevo idioma
         self.update_text_placeholders()
-        
-        # Actualizar indicador de riesgo
-        self.update_risk_indicator(self.tabWidget.currentIndex())
+
+        # Forzar repaint para limpiar rastro del popup en WSLg
+        QApplication.processEvents()
+        self.comboLanguage.repaint()
+        self.set_status("ready")
