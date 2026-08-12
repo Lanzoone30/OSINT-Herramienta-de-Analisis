@@ -133,6 +133,13 @@ class OSINTCompiler:
                 exe_file = self.build_dir / self.app_name
             if exe_file.exists():
                 return True, exe_file
+
+        # La compilacion fallo: muestra la salida de PyInstaller para diagnosticar.
+        print("\n[ERROR] PyInstaller fallo (returncode=%s)" % result.returncode)
+        if result.stdout:
+            print("--- stdout ---\n" + result.stdout[-4000:])
+        if result.stderr:
+            print("--- stderr ---\n" + result.stderr[-4000:])
         return False, None
 
     def generate_checksum(self, exe_file):
@@ -188,8 +195,6 @@ class OSINTCompiler:
             self.show_summary(exe_file, size_mb)
         except KeyboardInterrupt:
             self.running = False
-        except Exception:
-            pass
         finally:
             self.running = False
 
